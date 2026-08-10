@@ -17,43 +17,43 @@ const FIGURES = [
   { kind:'video', fig:'1', valve:'Pulmonary · ROI 1', condition:'ToF',
     title:'ToF — cellular volume & nuclei',
     src:'videos/tof_roi1_cellular_and_nuclei.mp4', poster:'posters/tof_roi1_cellular_and_nuclei.jpg',
-    colors:'Grayscale tissue · green matrix · dark-red nuclei',
-    caption:'The ToF pulmonary leaflet in 3D. Cellular tissue is left grayscale, the extracellular matrix is green, and nuclei are picked out in dark red.',
-    description:'This is the valve where the effect shows up: in ToF the cellular fraction drops and the green matrix takes up more of the volume.' },
+    colors:'Grayscale tissue · green cellular · dark-red nuclei',
+    caption:'The ToF pulmonary leaflet in 3D. The cellular material is highlighted in green and nuclei in dark red, against the surrounding tissue in grayscale.',
+    description:'This is the valve where the effect shows up: in ToF the cellular fraction (green) drops and the extracellular matrix takes up more of the volume.' },
 
   { kind:'video', fig:'2', valve:'Pulmonary · ROI 1', condition:'Control',
     title:'Control — cellular volume & nuclei',
     src:'videos/control_roi1_cellular_and_nuclei.mp4', poster:'posters/control_roi1_cellular_and_nuclei.jpg',
-    colors:'Grayscale tissue · green matrix · dark-red nuclei',
-    caption:'The normal leaflet, same region and same rendering. Watch it beside the ToF movie to see the shift toward more matrix.',
+    colors:'Grayscale tissue · green cellular · dark-red nuclei',
+    caption:'The normal leaflet, same region and same rendering. Watch it beside the ToF movie to see the shift toward less cellular material.',
     description:'The reference volume the ToF sample is measured against.' },
 
   { kind:'video', fig:'3', valve:'Pulmonary · ROI 1', condition:'ToF',
-    title:'ToF — matrix highlighted',
+    title:'ToF — cellular highlighted',
     src:'videos/tof_roi1_cellular_highlights.mp4', poster:'posters/tof_roi1_cellular_highlights.jpg',
-    colors:'Grayscale tissue · green matrix',
-    caption:'The same ToF volume with the extracellular matrix highlighted in green, so the cellular architecture reads clearly against it.',
-    description:'Nuclei are hidden here to keep attention on how tissue and matrix interleave.' },
+    colors:'Grayscale tissue · green cellular',
+    caption:'The same ToF volume with the cellular material highlighted in green, so its architecture reads clearly against the surrounding tissue.',
+    description:'Nuclei are hidden here to keep attention on the cellular network itself.' },
 
   { kind:'video', fig:'4', valve:'Pulmonary · ROI 1', condition:'Control',
-    title:'Control — matrix highlighted',
+    title:'Control — cellular highlighted',
     src:'videos/control_roi1_cellular_highlights.mp4', poster:'posters/control_roi1_cellular_highlights.jpg',
-    colors:'Grayscale tissue · green matrix',
-    caption:'The control volume with the matrix highlighted — noticeably less green than the ToF version.',
+    colors:'Grayscale tissue · green cellular',
+    caption:'The control volume with the cellular material highlighted — noticeably more green than the ToF version, reflecting its higher cellular fraction.',
     description:'Direct visual counterpart to Fig. 3.' },
 
   // ---- segmentation stills ----
   { kind:'image', fig:'5', valve:'Pulmonary · ROI 1', condition:'Control',
     title:'Three-class segmentation, single slice',
     src:'images/control_roi1_3class_slice.png',
-    colors:'Magenta cellular · green matrix · brown nuclei',
+    colors:'Purple extracellular · green cellular · brown nuclei',
     caption:'One 2D slice with every pixel labelled — this is the kind of hand-checked ground truth the model learns from.',
-    description:'Magenta is cellular material, green is extracellular matrix, brown is nuclei.' },
+    description:'Green is cellular material, purple is extracellular matrix, brown is nuclei.' },
 
   { kind:'image', fig:'6', valve:'Pulmonary · ROI 1', condition:'Control',
     title:'Three-class segmentation, 3D block',
     src:'images/control_roi1_3class_3d.png',
-    colors:'Magenta cellular · green matrix · brown nuclei',
+    colors:'Purple extracellular · green cellular · brown nuclei',
     caption:'The full labelled volume the slice above belongs to, rebuilt in 3D.',
     description:'Same colour scheme as Fig. 5, shown as a solid block.' },
 
@@ -74,7 +74,7 @@ const FIGURES = [
   { kind:'image', fig:'9', valve:'Aortic · ROI 2', condition:'Control',
     title:'Aortic leaflet — cellular vs matrix',
     src:'images/control_roi2_cell_ecm.png',
-    colors:'Magenta cellular · green matrix',
+    colors:'Purple extracellular · green cellular',
     caption:'The aortic valve, segmented into cellular and matrix. This is the comparison valve — it barely changes between conditions.',
     description:'Its flatness is what makes the pulmonary change valve-specific rather than a whole-heart effect.' }
 ];
@@ -87,8 +87,8 @@ const POSTER_LINK = '';
 :root{
   --bg:#0d1014; --bg-2:#12161c; --panel:#171c24; --line:#262d38;
   --ink:#e9edf1; --ink-mut:#7b8794;
-  --cellular:#c07fcc;      /* magenta — cellular (3-class renders) */
-  --extracellular:#6fa86f; /* green  — extracellular matrix */
+  --cellular:#6fa86f;      /* green — cellular */
+  --extracellular:#c07fcc; /* purple/magenta — extracellular matrix */
   --nuclei:#b04a4a;        /* red/brown — nuclei */
   --maxw:960px;
 }
@@ -182,11 +182,11 @@ footer{margin-top:50px;padding:26px 0 60px;border-top:1px solid var(--line)}
   </header>
 
   <div class="sec-head"><h2>Reconstructions</h2><span class="rule"></span></div>
-  <p class="sec-note">Rotating 3D volumes of the pulmonary valve leaflet (ROI&nbsp;1). Tissue is shown in grayscale; the extracellular matrix is green and nuclei are dark red. Tap to play.</p>
+  <p class="sec-note">Rotating 3D volumes of the pulmonary valve leaflet (ROI&nbsp;1). The cellular material is highlighted in green and nuclei in dark red, against the surrounding tissue in grayscale. Tap to play.</p>
   <div class="grid" id="grid-video"></div>
 
   <div class="sec-head"><h2>Segmentation stills</h2><span class="rule"></span></div>
-  <p class="sec-note">How the volumes are labelled before reconstruction. In the false-coloured renders, magenta is cellular material, green is extracellular matrix, and brown is nuclei; the nuclei-only views keep the tissue grayscale with nuclei in red.</p>
+  <p class="sec-note">How the volumes are labelled before reconstruction. In the false-coloured renders, green is cellular material, purple is extracellular matrix, and brown is nuclei; the nuclei-only views keep the tissue grayscale with nuclei in red.</p>
   <div class="grid" id="grid-image"></div>
 
   <div class="sec-head"><h2>What the numbers say</h2><span class="rule"></span></div>
@@ -216,12 +216,13 @@ footer{margin-top:50px;padding:26px 0 60px;border-top:1px solid var(--line)}
   var SW = { cellular:'var(--cellular)', matrix:'var(--extracellular)', nuclei:'var(--nuclei)' };
 
   function swatches(colors){
-    var t = colors.toLowerCase(), out = [];
-    if(t.indexOf('cellular')>-1 || t.indexOf('magenta')>-1) out.push(SW.cellular);
-    if(t.indexOf('matrix')>-1 || t.indexOf('green')>-1) out.push(SW.matrix);
-    if(t.indexOf('nuclei')>-1 || t.indexOf('red')>-1) out.push(SW.nuclei);
-    if(t.indexOf('grayscale')>-1) out.unshift('#b9c0c8');
-    return out.map(function(c){return '<i style="background:'+c+'"></i>';}).join('');
+    return colors.toLowerCase().split('·').map(function(tok){
+      if(tok.indexOf('grayscale')>-1) return '#b9c0c8';
+      if(tok.indexOf('green')>-1) return SW.cellular;
+      if(tok.indexOf('purple')>-1||tok.indexOf('magenta')>-1) return SW.matrix;
+      if(tok.indexOf('red')>-1||tok.indexOf('brown')>-1) return SW.nuclei;
+      return null;
+    }).filter(Boolean).map(function(c){return '<i style="background:'+c+'"></i>';}).join('');
   }
 
   function media(item){
