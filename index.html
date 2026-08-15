@@ -39,15 +39,15 @@ const FIGURES = [
     title:'Control — cellular highlighted',
     src:'videos/control_roi1_cellular_highlights.mp4', poster:'posters/control_roi1_cellular_highlights.jpg',
     colors:'Grayscale tissue · green cellular',
-    caption:'The control volume with the cellular material highlighted — noticeably more green than the ToF version, reflecting its higher cellular fraction.',
+    caption:'The control volume with the cellular material highlighted, noticeably more green than the ToF version, reflecting its higher cellular fraction.',
     description:'Direct visual counterpart to Fig. 3.' },
 
   // ---- segmentation stills ----
   { kind:'image', fig:'5', valve:'Pulmonary · ROI 1', condition:'Control',
     title:'Three-class segmentation, single slice',
     src:'images/control_roi1_3class_slice.png',
-    colors:'Purple extracellular · green cellular · brown nuclei',
-    caption:'One 2D slice with every pixel labelled — this is the kind of hand-checked ground truth the model learns from.',
+    colors:'Purple extracellular · green cellular · dark-red nuclei',
+    caption:'One 2D slice with every pixel labelled, this is the kind of hand-checked ground truth the model learns from.',
     description:'Green is cellular material, purple is extracellular matrix, brown is nuclei.' },
 
   { kind:'image', fig:'6', valve:'Pulmonary · ROI 1', condition:'Control',
@@ -75,7 +75,7 @@ const FIGURES = [
     title:'Aortic leaflet — cellular vs matrix',
     src:'images/control_roi2_cell_ecm.png',
     colors:'Purple extracellular · green cellular',
-    caption:'The aortic valve, segmented into cellular and matrix. This is the comparison valve — it barely changes between conditions.',
+    caption:'The aortic valve, segmented into cellular and matrix. This is the comparison valve, it barely changes between conditions.',
     description:'Its flatness is what makes the pulmonary change valve-specific rather than a whole-heart effect.' }
 ];
 
