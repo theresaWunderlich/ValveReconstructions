@@ -4,13 +4,13 @@
 
 🔗 **Live site:** https://theresawunderlich.github.io/ValveReconstructions/
 
-This is the companion page for a research poster (M.J. Murdock Charitable Trust · University of Portland × OHSU). Scan the poster's QR code — or follow the link above — to watch the reconstructions behind the results.
+This is the companion page for a research poster (M.J. Murdock Charitable Trust · University of Portland × OHSU). Scan the poster's QR code or follow the link above to watch the reconstructions behind the results.
 
 ---
 
 ## The finding
 
-Altered blood flow in Tetralogy of Fallot (ToF) **reduced the cellular fraction of the pulmonary valve** while leaving the aortic valve unchanged — a valve-specific pattern consistent with a flow-driven effect.
+Altered blood flow in Tetralogy of Fallot (ToF) **reduced the cellular fraction of the pulmonary valve** while leaving the aortic valve unchanged, a valve-specific pattern consistent with a flow-driven effect.
 
 | | Cellular fraction |
 |---|---|
@@ -23,9 +23,9 @@ Altered blood flow in Tetralogy of Fallot (ToF) **reduced the cellular fraction 
 - **Reconstructions** — four rotating 3D volumes of the pulmonary valve leaflet (control vs. ToF), shown with the cellular material and nuclei highlighted, and again with just the cellular network.
 - **Segmentation stills** — how the volumes are labelled: a single ground-truth slice, the 3-class volume, the nuclei in isolation, orthogonal slice views, and the aortic leaflet for comparison.
 
-### Colour key
+### Color key
 
-| Colour | Class |
+| Color | Class |
 |---|---|
 | 🟢 Green | Cellular material |
 | 🟣 Purple / magenta | Extracellular matrix |
@@ -46,7 +46,7 @@ images/        segmentation stills (PNG)
 README.md      this file
 ```
 
-The site is a single static page served with **GitHub Pages** — any commit to the default branch republishes it automatically.
+The site is a single static page served with **GitHub Pages** any commit to the default branch republishes it automatically.
 
 ## Authors
 
