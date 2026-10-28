@@ -3,165 +3,267 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Valve reconstructions — Wunderlich et al.</title>
-<meta name="description" content="3D electron-microscopy reconstructions of cardiac valve tissue in a Tetralogy of Fallot model.">
+<title>Valve Reconstructions — Wunderlich et al.</title>
+<meta name="description" content="3D electron-microscopy reconstructions of developing heart valve tissue in a Tetralogy of Fallot chick model, segmented with deep learning.">
 
 <!-- ==========================================================================
-     To change a caption or add/remove a figure, edit this list only.
-     kind: 'video'  -> src is a file in videos/  (poster is the still in posters/)
-     kind: 'image'  -> src is a file in images/
+     EDIT HERE. Captions, figures and chart numbers all live in this block.
+     PAIRS   -> side-by-side ToF vs Control reconstructions (tabbed viewer)
+     MOVIES  -> rotating 3D videos (src in videos/, poster still in posters/)
+     NUCLEI  -> single-nucleus reconstructions (cell counting, in progress)
      ========================================================================== -->
 <script>
-const FIGURES = [
-  // ---- rotating 3D movies (pulmonary leaflet, ROI 1) ----
-  { kind:'video', fig:'1', valve:'Pulmonary · ROI 1', condition:'ToF',
-    title:'ToF — cellular volume & nuclei',
-    src:'videos/tof_roi1_cellular_and_nuclei.mp4', poster:'posters/tof_roi1_cellular_and_nuclei.jpg',
-    colors:'Grayscale tissue · green cellular · dark-red nuclei',
-    caption:'The ToF pulmonary leaflet in 3D. The cellular material is highlighted in green and nuclei in dark red, against the surrounding tissue in grayscale.',
-    description:'This is the valve where the effect shows up: in ToF the cellular fraction (green) drops and the extracellular matrix takes up more of the volume.' },
+const PAIRS = [
+  { id:'pulm', tab:'Pulmonary · cell / matrix',
+    title:'Pulmonary valve: cellular vs. extracellular',
+    colors:['cellular','matrix'],
+    tof:'images/pulm_tof_cell_ecm.jpg', control:'images/pulm_control_cell_ecm.jpg',
+    caption:'This is where the effect shows up. The ToF pulmonary leaflet is visibly more purple: cell material falls from 0.505 to 0.352 of the volume, and extracellular matrix fills the difference.' },
 
-  { kind:'video', fig:'2', valve:'Pulmonary · ROI 1', condition:'Control',
-    title:'Control — cellular volume & nuclei',
-    src:'videos/control_roi1_cellular_and_nuclei.mp4', poster:'posters/control_roi1_cellular_and_nuclei.jpg',
-    colors:'Grayscale tissue · green cellular · dark-red nuclei',
-    caption:'The normal leaflet, same region and same rendering. Watch it beside the ToF movie to see the shift toward less cellular material.',
-    description:'The reference volume the ToF sample is measured against.' },
+  { id:'aortic', tab:'Aortic · cell / matrix',
+    title:'Aortic valve: cellular vs. extracellular',
+    colors:['cellular','matrix'],
+    tof:'images/aortic_tof_cell_ecm.jpg', control:'images/aortic_control_cell_ecm.jpg',
+    caption:'The comparison valve. Cellular fraction is essentially identical (0.503 ToF vs. 0.501 control), so the pulmonary change is valve-specific, not a whole-heart effect.' },
 
-  { kind:'video', fig:'3', valve:'Pulmonary · ROI 1', condition:'ToF',
-    title:'ToF — cellular highlighted',
-    src:'videos/tof_roi1_cellular_highlights.mp4', poster:'posters/tof_roi1_cellular_highlights.jpg',
-    colors:'Grayscale tissue · green cellular',
-    caption:'The same ToF volume with the cellular material highlighted in green, so its architecture reads clearly against the surrounding tissue.',
-    description:'Nuclei are hidden here to keep attention on the cellular network itself.' },
+  { id:'three', tab:'Pulmonary · + nuclei',
+    title:'Pulmonary valve: cellular, extracellular and nuclei',
+    colors:['cellular','matrix','nuclei'],
+    tof:'images/pulm_tof_3class.jpg', control:'images/pulm_control_3class.jpg',
+    caption:'Nuclei (dark red) carved out of the cellular class. Control nuclei look fewer but larger; ToF nuclei look more numerous and smaller.' },
 
-  { kind:'video', fig:'4', valve:'Pulmonary · ROI 1', condition:'Control',
-    title:'Control — cellular highlighted',
-    src:'videos/control_roi1_cellular_highlights.mp4', poster:'posters/control_roi1_cellular_highlights.jpg',
-    colors:'Grayscale tissue · green cellular',
-    caption:'The control volume with the cellular material highlighted, noticeably more green than the ToF version, reflecting its higher cellular fraction.',
-    description:'Direct visual counterpart to Fig. 3.' },
+  { id:'nuc', tab:'Pulmonary · cells + nuclei',
+    title:'Pulmonary valve: cell material and nuclei only',
+    colors:['cellular','nuclei','tissue'],
+    tof:'images/pulm_tof_cell_nuclei.jpg', control:'images/pulm_control_cell_nuclei.jpg',
+    caption:'Extracellular matrix hidden (left as grayscale) so the cells and their nuclei read on their own.' },
 
-  // ---- segmentation stills ----
-  { kind:'image', fig:'5', valve:'Pulmonary · ROI 1', condition:'Control',
-    title:'Three-class segmentation, single slice',
-    src:'images/control_roi1_3class_slice.png',
-    colors:'Purple extracellular · green cellular · dark-red nuclei',
-    caption:'One 2D slice with every pixel labelled, this is the kind of hand-checked ground truth the model learns from.',
-    description:'Green is cellular material, purple is extracellular matrix, brown is nuclei.' },
-
-  { kind:'image', fig:'6', valve:'Pulmonary · ROI 1', condition:'Control',
-    title:'Three-class segmentation, 3D block',
-    src:'images/control_roi1_3class_3d.png',
-    colors:'Purple extracellular · green cellular · brown nuclei',
-    caption:'The full labelled volume the slice above belongs to, rebuilt in 3D.',
-    description:'Same colour scheme as Fig. 5, shown as a solid block.' },
-
-  { kind:'image', fig:'7', valve:'Pulmonary · ROI 1', condition:'Control',
-    title:'Nuclei within the volume',
-    src:'images/control_roi1_nuclei_3d.png',
-    colors:'Grayscale tissue · red nuclei',
-    caption:'Nuclei isolated in red against the grayscale tissue, showing how they sit inside the leaflet.',
-    description:'The nuclei were segmented separately and carved out of the cellular class rather than trusted from the three-class model.' },
-
-  { kind:'image', fig:'8', valve:'Pulmonary · ROI 1', condition:'Control',
-    title:'Nuclei across orthogonal slices',
-    src:'images/control_roi1_nuclei_slices.png',
-    colors:'Grayscale EM · red nuclei',
-    caption:'The Dragonfly slice-by-slice view: the same nuclei seen from three perpendicular directions plus the 3D block.',
-    description:'This is what checking the nuclei segmentation looks like before reconstruction.' },
-
-  { kind:'image', fig:'9', valve:'Aortic · ROI 2', condition:'Control',
-    title:'Aortic leaflet — cellular vs matrix',
-    src:'images/control_roi2_cell_ecm.png',
-    colors:'Purple extracellular · green cellular',
-    caption:'The aortic valve, segmented into cellular and matrix. This is the comparison valve, it barely changes between conditions.',
-    description:'Its flatness is what makes the pulmonary change valve-specific rather than a whole-heart effect.' }
+  { id:'ortho', tab:'Pulmonary · orthogonal slices',
+    title:'Pulmonary valve: nuclei across orthogonal slices',
+    colors:['tissue','nuclei'],
+    tof:'images/pulm_tof_nuclei_slices.jpg', control:'images/pulm_control_nuclei_slices.jpg',
+    caption:'The Dragonfly view used to check the nuclei segmentation: the 3D block plus three perpendicular slices through the raw EM.' }
 ];
 
-// Optional link back to the poster PDF or lab page. Leave '' to hide.
-const POSTER_LINK = '';
+const MOVIES = [
+  { condition:'ToF', title:'ToF: cell material & nuclei',
+    src:'videos/tof_roi1_cellular_and_nuclei.mp4', poster:'posters/tof_roi1_cellular_and_nuclei.jpg',
+    colors:['tissue','cellular','nuclei'] },
+  { condition:'Control', title:'Control: cell material & nuclei',
+    src:'videos/control_roi1_cellular_and_nuclei.mp4', poster:'posters/control_roi1_cellular_and_nuclei.jpg',
+    colors:['tissue','cellular','nuclei'] },
+  { condition:'ToF', title:'ToF: cell material only',
+    src:'videos/tof_roi1_cellular_highlights.mp4', poster:'posters/tof_roi1_cellular_highlights.jpg',
+    colors:['tissue','cellular'] },
+  { condition:'Control', title:'Control: cell material only',
+    src:'videos/control_roi1_cellular_highlights.mp4', poster:'posters/control_roi1_cellular_highlights.jpg',
+    colors:['tissue','cellular'] }
+];
+
+const NUCLEI = [
+  { src:'images/single_nucleus_a.jpg', alt:'Single segmented nucleus, oblique view' },
+  { src:'images/single_nucleus_b.jpg', alt:'Same nucleus, side view' },
+  { src:'images/single_nucleus_c.jpg', alt:'Same nucleus, top view (smoothed surface)' }
+];
+
+// Cellular volume fraction (cytoplasm + nuclei), 40 x 40 µm interior crops, n = 1 ROI each
+const CELLULAR = [
+  { group:'Aortic valve',    label:'Control', v:0.501 },
+  { group:'Aortic valve',    label:'ToF',     v:0.503 },
+  { group:'Pulmonary valve', label:'Control', v:0.505 },
+  { group:'Pulmonary valve', label:'ToF',     v:0.352 },
+  { group:'Aorta wall',      label:'Control', v:0.467 }
+];
+
+// Pulmonary valve compartments, Control vs ToF
+const COMPARTMENTS = [
+  { label:'Cytoplasm',              control:0.425, tof:0.264 },
+  { label:'Nuclei',                 control:0.080, tof:0.089 },
+  { label:'Extracellular matrix',   control:0.495, tof:0.648 },
+  { label:'Cell material (cyto + nuclei)', control:0.505, tof:0.352 }
+];
 </script>
 
 <style>
 :root{
   --bg:#0d1014; --bg-2:#12161c; --panel:#171c24; --line:#262d38;
-  --ink:#e9edf1; --ink-mut:#7b8794;
-  --cellular:#6fa86f;      /* green — cellular */
-  --extracellular:#c07fcc; /* purple/magenta — extracellular matrix */
-  --nuclei:#b04a4a;        /* red/brown — nuclei */
-  --maxw:960px;
+  --ink:#e9edf1; --ink-2:#cdd6df; --ink-mut:#8a96a3;
+  --cellular:#6fa86f; --extracellular:#c07fcc; --nuclei:#b04a4a; --tissue:#b9c0c8;
+  --control:#5fb3c4; --tof:#e0868f;
+  --link:#8fb7ff;
+  --maxw:1040px;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{
   margin:0;
   background:radial-gradient(1200px 600px at 50% -8%, #16202b 0%, rgba(22,32,43,0) 60%), var(--bg);
   color:var(--ink);
   font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  line-height:1.55;-webkit-font-smoothing:antialiased;
+  line-height:1.6;-webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+a{color:var(--link)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+@media(min-width:600px){.wrap{padding:0 24px}}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
 
-header{padding:44px 0 20px}
-.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--ink-mut);margin:0 0 14px}
+/* nav */
+nav{position:sticky;top:0;z-index:20;background:rgba(13,16,20,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-top:8px;padding-bottom:8px}
+nav .wrap::-webkit-scrollbar{display:none}
+nav a{flex:none;font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.04em;color:var(--ink-mut);
+  text-decoration:none;padding:6px 10px;border-radius:999px}
+nav a:hover,nav a.on{color:var(--ink);background:var(--panel)}
+
+/* header */
+header{padding:44px 0 8px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-mut);margin:0 0 14px}
 h1{font-family:"Space Grotesk",sans-serif;font-weight:600;line-height:1.08;letter-spacing:-.015em;
-  font-size:clamp(28px,7.4vw,46px);margin:0 0 18px}
-.finding{font-size:clamp(15px,4vw,18px);color:#cdd6df;max-width:60ch;margin:0 0 22px}
+  font-size:clamp(28px,6.6vw,46px);margin:0 0 18px;max-width:28ch;text-wrap:balance}
+.finding{font-size:clamp(15px,4vw,18px);color:var(--ink-2);max-width:62ch;margin:0 0 22px}
 .finding b{color:var(--ink);font-weight:600}
 .byline{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-mut);line-height:1.7;margin:0}
 .byline .name{color:#b9c2cc}
 
-.sec-head{display:flex;align-items:baseline;gap:12px;margin:44px 0 6px}
-.sec-head h2{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:19px;letter-spacing:-.01em;margin:0}
-.sec-head .rule{flex:1;height:1px;background:var(--line)}
-.sec-note{font-size:13.5px;color:var(--ink-mut);margin:0 0 20px;max-width:64ch}
-
-.grid{display:grid;grid-template-columns:1fr;gap:22px}
-@media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
-.card{border:1px solid var(--line);border-radius:16px;overflow:hidden;
-  background:linear-gradient(180deg,var(--panel),var(--bg-2));display:flex;flex-direction:column}
-.frame{position:relative;aspect-ratio:16/10;background:#05070a;display:flex;align-items:center;justify-content:center}
-.frame video{width:100%;height:100%;display:block;object-fit:cover;background:#05070a}
-.frame img{width:100%;height:100%;display:block;object-fit:contain;background:#05070a}
-.placeholder{text-align:center;padding:18px;color:var(--ink-mut);font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.7}
-.placeholder .big{font-size:26px;color:#3a4552;margin-bottom:8px}
-.placeholder code{color:#8fb7ff;font-size:11.5px}
-.tags{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:2}
-.tag{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.06em;padding:4px 8px;border-radius:999px;
-  background:rgba(8,11,15,.72);border:1px solid rgba(255,255,255,.12);color:#dbe3ea;backdrop-filter:blur(3px)}
-.tag.tof{color:#e6a3a3;border-color:rgba(176,74,74,.5)}
-.card-body{padding:16px 17px 18px}
-.figno{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cellular);margin:0 0 6px}
-.card h3{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:16px;margin:0 0 9px}
-.cap{font-size:14px;color:#cdd6df;margin:0 0 10px}
-.desc{font-size:13px;color:var(--ink-mut);margin:0}
-.colorline{display:flex;align-items:center;gap:8px;margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line);
-  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-mut)}
-.swatch{display:inline-flex;gap:4px}
-.swatch i{width:10px;height:10px;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset}
-
-.stats{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:6px}
+/* stats */
+.stats{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:30px 0 0}
 @media(min-width:620px){.stats{grid-template-columns:repeat(3,1fr)}}
 .stat{background:linear-gradient(180deg,var(--panel),var(--bg-2));padding:18px 16px}
-.stat .num{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:clamp(22px,6vw,28px);letter-spacing:-.02em}
-.stat .num.down{color:var(--extracellular)}
+.stat .num{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:clamp(22px,6vw,28px);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .num.tof{color:var(--tof)}
 .stat .lab{font-size:12.5px;color:var(--ink-mut);margin-top:4px;line-height:1.4}
 
-.method{font-size:14px;color:#c3ccd5;max-width:66ch}
-.method p{margin:0 0 12px}
-.method b{color:var(--ink);font-weight:600}
+/* sections */
+section{scroll-margin-top:56px}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin:60px 0 6px}
+.sec-head .k{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--cellular);letter-spacing:.14em}
+.sec-head h2{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:clamp(20px,5vw,24px);letter-spacing:-.01em;margin:0}
+.sec-head .rule{flex:1;height:1px;background:var(--line)}
+.sec-note{font-size:14.5px;color:var(--ink-mut);margin:0 0 22px;max-width:66ch}
+h3{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:17px;margin:34px 0 8px}
+.prose{font-size:15px;color:var(--ink-2);max-width:68ch}
+.prose p{margin:0 0 14px}
+.prose b{color:var(--ink);font-weight:600}
 
-footer{margin-top:50px;padding:26px 0 60px;border-top:1px solid var(--line)}
-.ack{font-size:12.5px;color:var(--ink-mut);line-height:1.75;margin:0 0 14px}
+/* legend chips */
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin:0 0 18px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-mut)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i,.sw{width:11px;height:11px;border-radius:3px;display:inline-block;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset}
+
+/* comparison viewer */
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 14px;padding-bottom:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;font:500 12.5px "IBM Plex Mono",monospace;color:var(--ink-mut);background:transparent;
+  border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--ink);background:var(--panel);border-color:#3a4555}
+.viewer{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:linear-gradient(180deg,var(--panel),var(--bg-2))}
+.pair{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line)}
+@media(min-width:720px){.pair{grid-template-columns:1fr 1fr}}
+.pane{position:relative;background:#000;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;cursor:zoom-in;border:0;padding:0}
+.pane img{width:100%;height:100%;object-fit:contain;display:block}
+.tag{position:absolute;top:10px;left:10px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;padding:4px 9px;border-radius:999px;
+  background:rgba(8,11,15,.75);border:1px solid rgba(255,255,255,.14);color:#dbe3ea}
+.tag.tof{color:var(--tof);border-color:rgba(224,134,143,.5)}
+.tag.control{color:var(--control);border-color:rgba(95,179,196,.5)}
+.viewer-body{padding:16px 18px 18px}
+.viewer-body h4{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:16px;margin:0 0 6px}
+.viewer-body p{margin:0;font-size:14.5px;color:var(--ink-2);max-width:72ch}
+.viewer-body .legend{margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+
+/* movie grid */
+.grid{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
+.card{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,var(--panel),var(--bg-2))}
+.card .frame{position:relative;aspect-ratio:16/9;background:#05070a}
+.card video{width:100%;height:100%;display:block;object-fit:cover;background:#05070a}
+.card .body{padding:12px 15px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.card h4{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15px;margin:0}
+.card .legend{margin:0}
+
+/* single nuclei */
+.strip{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:620px){.strip{grid-template-columns:repeat(3,1fr)}}
+.strip button{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#000;padding:0;cursor:zoom-in;aspect-ratio:16/9}
+.strip img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* charts */
+.chart{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--panel),var(--bg-2));padding:18px 18px 14px;margin:0 0 18px}
+.chart h4{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:16px;margin:0 0 4px}
+.chart .sub{font-size:12.5px;color:var(--ink-mut);margin:0 0 16px}
+.bars{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:minmax(110px,170px) 1fr;align-items:center;gap:12px}
+.row .rl{font-size:13px;color:var(--ink-2);line-height:1.3}
+.row .rl small{display:block;color:var(--ink-mut);font-size:11.5px}
+.track{position:relative;height:24px}
+.bar{height:100%;border-radius:0 5px 5px 0;display:flex;align-items:center;justify-content:flex-end;min-width:2px;transition:width .8s cubic-bezier(.2,.7,.2,1)}
+.bar b{font:500 12px "IBM Plex Mono",monospace;color:#0d1014;padding:0 7px;font-variant-numeric:tabular-nums}
+.bar.out b{position:absolute;left:calc(var(--w) + 6px);color:var(--ink-2)}
+.ref{position:absolute;top:-4px;bottom:-4px;width:0;border-left:1px dashed #4a5563}
+.hl{outline:1px solid rgba(224,134,143,.45);outline-offset:4px;border-radius:6px}
+.grp{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mut);margin:6px 0 -2px}
+.pairbars{display:grid;gap:4px}
+.pairbars .track{height:18px}
+.chart .foot{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-mut);margin:14px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+
+/* background */
+.features{display:grid;grid-template-columns:1fr;gap:12px;margin:8px 0 6px}
+@media(min-width:620px){.features{grid-template-columns:1fr 1fr}}
+.feat{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg-2)}
+.feat .n{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-mut);letter-spacing:.12em}
+.feat h4{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15.5px;margin:4px 0 4px}
+.feat p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.feat.flow{border-color:rgba(224,134,143,.35)}
+.feat.flow .n::after{content:" · reshapes flow";color:var(--tof)}
+.callout{border-left:2px solid var(--tof);padding:4px 0 4px 16px;margin:20px 0;font-size:15px;color:var(--ink-2);max-width:66ch}
+.callout b{color:var(--ink)}
+
+/* methods */
+.steps{display:grid;grid-template-columns:1fr;gap:10px;counter-reset:s;margin:6px 0 4px}
+@media(min-width:720px){.steps{grid-template-columns:repeat(4,1fr)}}
+.step{border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:var(--bg-2);counter-increment:s}
+.step::before{content:counter(s,decimal-leading-zero);font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--cellular);letter-spacing:.1em}
+.step h4{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15px;margin:4px 0 4px}
+.step p{margin:0;font-size:13px;color:var(--ink-mut)}
+.roi{display:grid;grid-template-columns:1fr;gap:16px;margin:8px 0}
+@media(min-width:720px){.roi{grid-template-columns:1fr 1fr}}
+.roi figure{margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg-2)}
+.roi button{display:block;width:100%;padding:0;border:0;background:#000;cursor:zoom-in}
+.roi img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover}
+.roi figcaption{padding:12px 14px;font-size:13px;color:var(--ink-2)}
+.roi figcaption b{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:14.5px;display:block;margin-bottom:6px;color:var(--ink)}
+.roi ul{margin:0;padding-left:18px;color:var(--ink-mut)}
+.roi li span{color:var(--ink-2)}
+.gt{display:grid;grid-template-columns:1fr;gap:6px;margin:12px 0 4px}
+.gt .line{position:relative;height:30px;margin:0 6px}
+.gt .line::before{content:"";position:absolute;left:0;right:0;top:13px;height:4px;border-radius:2px;background:#323b47}
+.gt .tick{position:absolute;top:4px;width:4px;height:22px;border-radius:2px;background:var(--cellular)}
+.gt .lbls{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-mut)}
+.models{display:grid;grid-template-columns:1fr;gap:12px;margin:14px 0 0}
+@media(min-width:620px){.models{grid-template-columns:1fr 1fr}}
+.model{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg-2)}
+.model h4{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15.5px;margin:0 0 4px}
+.model p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.unet{display:block;width:100%;max-width:560px;height:auto;margin:16px 0 4px}
+
+/* conclusions / future */
+.list{display:grid;gap:10px;margin:6px 0;padding:0;list-style:none}
+.list li{border:1px solid var(--line);border-radius:14px;padding:13px 16px;background:var(--bg-2);font-size:14.5px;color:var(--ink-2)}
+.list li b{display:block;font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15.5px;color:var(--ink);margin-bottom:3px}
+.list li .st{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--cellular);margin-left:8px;font-weight:500}
+
+footer{margin-top:64px;padding:26px 0 60px;border-top:1px solid var(--line)}
+.ack{font-size:13px;color:var(--ink-mut);line-height:1.75;margin:0 0 18px;max-width:72ch}
 .ack .h{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6d7a87;display:block;margin-bottom:6px}
-.backlink{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:#8fb7ff;text-decoration:none;border-bottom:1px solid rgba(143,183,255,.3);padding-bottom:1px}
+.contact a{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-decoration:none;border-bottom:1px solid rgba(143,183,255,.3);margin-right:16px;display:inline-block;margin-bottom:6px}
 
-@media(prefers-reduced-motion:no-preference){
-  .card{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
-  .card.in{opacity:1;transform:none}
-}
+/* lightbox */
+dialog{border:0;padding:0;background:transparent;max-width:96vw;max-height:94vh}
+dialog::backdrop{background:rgba(3,5,8,.92)}
+dialog img{max-width:96vw;max-height:88vh;display:block;border-radius:8px}
+dialog p{color:var(--ink-mut);font-size:13px;text-align:center;margin:8px 0 0;font-family:"IBM Plex Mono",monospace}
+dialog button{position:fixed;top:12px;right:14px;font:500 13px "IBM Plex Mono",monospace;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+
+:focus-visible{outline:2px solid var(--link);outline-offset:2px}
 </style>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -169,105 +271,306 @@ footer{margin-top:50px;padding:26px 0 60px;border-top:1px solid var(--line)}
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+
+<nav aria-label="Sections"><div class="wrap">
+  <a href="#reconstructions">Reconstructions</a>
+  <a href="#results">Results</a>
+  <a href="#background">Background</a>
+  <a href="#methods">Methods</a>
+  <a href="#conclusions">Conclusions</a>
+  <a href="#next">What's next</a>
+</div></nav>
+
 <div class="wrap">
   <header>
     <p class="eyebrow">Volume EM · deep-learning segmentation · 3D reconstruction</p>
-    <h1>Quantifying valve tissue in a congenital heart disease model</h1>
-    <p class="finding">Altered blood flow in Tetralogy of Fallot <b>reduced the cellular fraction of the pulmonary valve</b> while leaving the aortic valve unchanged — a valve-specific pattern consistent with a flow-driven effect. The reconstructions below are the 3D volumes behind that result.</p>
+    <h1>Quantifying cellular organization in a congenital heart disease model</h1>
+    <p class="finding">In Tetralogy of Fallot, blood is forced through the heart along altered paths. In a chick model of the disease, <b>the pulmonary valve lost cell material and gained extracellular matrix</b>, while the aortic valve stayed essentially unchanged: a valve-specific pattern consistent with blood flow shaping how valves remodel. The 3D reconstructions below are the volumes behind that result.</p>
     <p class="byline">
       <span class="name">Theresa Wunderlich¹</span>, Sandra Rugonyi Ph.D.², Makena Phillips², Sanjay Srikanth²<br>
-      1 — University of Portland, Shiley School of Engineering<br>
-      2 — OHSU, Department of Biomedical Engineering
+      1: University of Portland, Shiley School of Engineering<br>
+      2: OHSU, Department of Biomedical Engineering
     </p>
+    <div class="stats">
+      <div class="stat"><div class="num">0.505</div><div class="lab">Pulmonary valve cell fraction, control</div></div>
+      <div class="stat"><div class="num tof">0.352</div><div class="lab">Pulmonary valve cell fraction, ToF (about 15 percentage points lower)</div></div>
+      <div class="stat"><div class="num">0.501 / 0.503</div><div class="lab">Aortic valve cell fraction, control / ToF (no change)</div></div>
+    </div>
   </header>
 
-  <div class="sec-head"><h2>Reconstructions</h2><span class="rule"></span></div>
-  <p class="sec-note">Rotating 3D volumes of the pulmonary valve leaflet (ROI&nbsp;1). The cellular material is highlighted in green and nuclei in dark red, against the surrounding tissue in grayscale. Tap to play.</p>
-  <div class="grid" id="grid-video"></div>
+  <!-- ================= RECONSTRUCTIONS ================= -->
+  <section id="reconstructions">
+    <div class="sec-head"><span class="k">01</span><h2>Reconstructions</h2><span class="rule"></span></div>
+    <p class="sec-note">Every block is a 40 × 40 µm cube cut from the exact middle of a region of interest, so all comparisons are like-for-like. Pick a view, then tap any image to enlarge it.</p>
 
-  <div class="sec-head"><h2>Segmentation stills</h2><span class="rule"></span></div>
-  <p class="sec-note">How the volumes are labelled before reconstruction. In the false-coloured renders, green is cellular material, purple is extracellular matrix, and brown is nuclei; the nuclei-only views keep the tissue grayscale with nuclei in red.</p>
-  <div class="grid" id="grid-image"></div>
+    <div class="legend" aria-label="Color key">
+      <span><i style="background:var(--cellular)"></i>Cell material</span>
+      <span><i style="background:var(--extracellular)"></i>Extracellular matrix</span>
+      <span><i style="background:var(--nuclei)"></i>Nuclei</span>
+      <span><i style="background:var(--tissue)"></i>Raw tissue (grayscale)</span>
+    </div>
 
-  <div class="sec-head"><h2>What the numbers say</h2><span class="rule"></span></div>
-  <div class="stats">
-    <div class="stat"><div class="num">0.51</div><div class="lab">Pulmonary cellular fraction — control</div></div>
-    <div class="stat"><div class="num down">0.35</div><div class="lab">Pulmonary cellular fraction — ToF (~15 pp lower)</div></div>
-    <div class="stat"><div class="num">≈0</div><div class="lab">Aortic cellular-fraction difference</div></div>
-  </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="viewer">
+      <div class="pair" id="pair"></div>
+      <div class="viewer-body"><h4 id="pair-title"></h4><p id="pair-cap"></p><div class="legend" id="pair-legend"></div></div>
+    </div>
 
-  <div class="sec-head"><h2>How it was made</h2><span class="rule"></span></div>
-  <div class="method">
-    <p>ToF was induced in chick embryos with cyclopamine and confirmed in vivo by ultrasound of aortic blood flow. One control and one ToF heart were prepared for <b>volume electron microscopy</b>, sampling the pulmonary and aortic valves.</p>
-    <p>Tissue was split into <b>cellular</b> and <b>extracellular</b> classes with a two-class U-Net trained on hand-traced ground-truth slices. Nuclei were segmented separately and carved out of the cellular class, so the verified cellular/matrix split stays fixed. Volume fractions are voxel-count ratios, independent of the voxel-size calibration.</p>
-  </div>
+    <h3>Rotating 3D volumes</h3>
+    <p class="sec-note">The pulmonary leaflet turning in 3D, ToF beside control. Watch the pair together: the control volume carries noticeably more green.</p>
+    <div class="grid" id="movies"></div>
+
+    <h3>One nucleus at a time</h3>
+    <p class="sec-note">A first output from the cell-counting model (in progress): a single nucleus pulled out of the volume as its own labeled 3D object. Separating nuclei like this is what lets us count them, rather than only measure how much space they fill.</p>
+    <div class="strip" id="nuclei"></div>
+  </section>
+
+  <!-- ================= RESULTS ================= -->
+  <section id="results">
+    <div class="sec-head"><span class="k">02</span><h2>Results</h2><span class="rule"></span></div>
+    <p class="sec-note">Volume fractions are voxel-count ratios from the segmented 40 × 40 µm interior crops. One ROI per structure per condition, measured on raw EM without intensity normalization.</p>
+
+    <div class="chart" id="chart-cell">
+      <h4>Cellular density by structure</h4>
+      <p class="sub">Fraction of the volume that is cell material (cytoplasm + nuclei). Dashed line marks 0.5.</p>
+      <div class="bars" id="bars-cell"></div>
+      <p class="foot">40 × 40 µm interior crops · n = 1 ROI per structure per condition</p>
+    </div>
+
+    <div class="chart" id="chart-comp">
+      <h4>Pulmonary valve: what fills the volume</h4>
+      <p class="sub"><span class="sw" style="background:var(--control)"></span> Control &nbsp; <span class="sw" style="background:var(--tof)"></span> ToF</p>
+      <div class="bars" id="bars-comp"></div>
+      <p class="foot">40 × 40 µm interior crops · n = 1 ROI per condition</p>
+    </div>
+
+    <div class="prose">
+      <p><b>The pulmonary valve changed; the aortic valve didn't.</b> The ToF pulmonary leaflet had fewer cells and more of the material between them. That flow-specific pattern is what the hypothesis predicted.</p>
+      <p><b>Nuclei: a hint, not yet a result.</b> The share of the volume taken up by nuclei was similar (0.080 vs. 0.089), and with one sample per condition that difference doesn't mean much on its own. In the renders, though, control nuclei look fewer but larger, while ToF nuclei look more numerous and smaller, which could mean the ToF valve is built from smaller, less mature cells. Counting individual nuclei is how I'm testing that.</p>
+    </div>
+  </section>
+
+  <!-- ================= BACKGROUND ================= -->
+  <section id="background">
+    <div class="sec-head"><span class="k">03</span><h2>Background</h2><span class="rule"></span></div>
+    <div class="prose">
+      <p><b>Congenital heart disease (CHD)</b> means a baby is born with a defect in the heart. It affects about 1% of newborns worldwide, and in the United States it is the leading non-infectious cause of death in infants and children.</p>
+      <p><b>Tetralogy of Fallot (ToF)</b> is one of the most common forms. Heart defects can form when blood flow is altered during early development, and in ToF the blood moves through the aorta at higher speed than normal. ToF is defined by four features:</p>
+    </div>
+    <div class="features">
+      <div class="feat flow"><div class="n">01</div><h4>Ventricular septal defect</h4><p>A hole in the wall between the two lower chambers.</p></div>
+      <div class="feat flow"><div class="n">02</div><h4>Pulmonary stenosis</h4><p>The pulmonary valve is narrowed.</p></div>
+      <div class="feat"><div class="n">03</div><h4>Overriding aorta</h4><p>The aorta sits over both ventricles instead of over the left ventricle only.</p></div>
+      <div class="feat"><div class="n">04</div><h4>Right ventricular hypertrophy</h4><p>The muscle of the right ventricle thickens.</p></div>
+    </div>
+    <div class="callout">
+      <p style="margin:0 0 10px">Two of these reshape the flow. Think of a garden hose: squeeze the opening and the water comes out faster. Pulmonary stenosis does that to blood. Add the hole between the ventricles, and blood can take the easier path, rerouting into the aorta.</p>
+      <p style="margin:0"><b>Hypothesis:</b> the altered blood flow in a ToF heart changes the cellular structure inside the valves.</p>
+    </div>
+    <div class="prose">
+      <p><b>Aim:</b> to better understand how blood flow affects the way heart valve leaflets develop and mature. Chick embryos treated with cyclopamine develop ToF hearts, with increased flow through the aortic valve and abnormal remodeling. To see and measure the difference between ToF and normal valves at the cellular level, I trained deep-learning models to segment cell structures in volume electron microscopy.</p>
+    </div>
+  </section>
+
+  <!-- ================= METHODS ================= -->
+  <section id="methods">
+    <div class="sec-head"><span class="k">04</span><h2>Methods</h2><span class="rule"></span></div>
+
+    <h3 style="margin-top:8px">Sample collection</h3>
+    <p class="sec-note">Chick embryos are a well-established model for human heart development. They are easy to reach and manipulate inside the shell, so the developing heart can be studied with minimal interference.</p>
+    <div class="steps">
+      <div class="step"><h4>Intervene</h4><p>Add cyclopamine to chick embryos to induce the ToF phenotype.</p></div>
+      <div class="step"><h4>Confirm phenotype</h4><p>In vivo ultrasound imaging of blood flow verifies the ToF heart.</p></div>
+      <div class="step"><h4>Collect</h4><p>Collect the embryos and hearts.</p></div>
+      <div class="step"><h4>Prepare</h4><p>Prepare samples for electron microscopy.</p></div>
+    </div>
+
+    <h3>Electron microscopy</h3>
+    <p class="sec-note">Electron microscopy uses a beam of electrons to make extremely detailed, high-magnification images. Image stacks were collected from cropped regions of interest (ROIs) in each heart.</p>
+    <div class="roi">
+      <figure>
+        <button type="button" data-zoom="images/em_overview_control.jpg" data-cap="Control heart: EM overview with ROIs"><img src="images/em_overview_control.jpg" alt="EM overview of the control heart with three ROIs marked" loading="lazy"></button>
+        <figcaption><b>Control (normal) heart</b>
+          <ul><li><span>ROI 1:</span> pulmonary valve leaflet</li><li><span>ROI 2:</span> aortic valve leaflet</li><li><span>ROI 3:</span> aorta wall tissue</li></ul>
+        </figcaption>
+      </figure>
+      <figure>
+        <button type="button" data-zoom="images/em_overview_tof.jpg" data-cap="ToF heart: EM overview with ROIs"><img src="images/em_overview_tof.jpg" alt="EM overview of the ToF heart with two ROIs marked" loading="lazy"></button>
+        <figcaption><b>ToF heart</b>
+          <ul><li><span>ROI 1:</span> aortic valve leaflet</li><li><span>ROI 2:</span> pulmonary valve leaflet</li></ul>
+        </figcaption>
+      </figure>
+    </div>
+
+    <h3>Deep-learning segmentation</h3>
+    <div class="prose">
+      <p>All segmentation ran in <b>Dragonfly ORS</b>. The workflow has four steps: <b>label</b> ground truth, <b>train</b> the model, <b>apply</b> it to the whole stack, and <b>measure</b> by counting voxels in each class.</p>
+      <p>To teach the model, I first gave it an answer key: structures traced by hand on selected slices (ground-truth slices). Early on these were close together, about every 20 slices, so the model always had a nearby example. As it improved I spread them to 40–60 slices apart, because it had learned to fill the bigger gaps on its own. Each training session ran 100 epochs.</p>
+    </div>
+    <div class="gt" aria-label="Ground-truth slice spacing">
+      <div class="line" id="gtline"></div>
+      <div class="lbls"><span>early: ~20 slices apart</span><span>later: 40–60 slices apart</span></div>
+    </div>
+    <div class="prose">
+      <p>Once trained, the model ran across the whole image stack, the result was rebuilt in 3D, and the amount of each class was counted.</p>
+      <p>Both models are <b>U-Nets</b>. A U-Net labels every point in an image by what it is (cell, nucleus, or the material between cells). It works in two passes: first it zooms out to work out what is in the image, then it zooms back in to mark where each piece is. Drawn out, that path looks like the letter U.</p>
+    </div>
+    <svg class="unet" viewBox="0 0 560 170" role="img" aria-label="U-Net shape: encoder path going down, decoder path going up, with skip connections across">
+      <g fill="none" stroke="#3a4555" stroke-dasharray="3 4"><path d="M92 30H428M132 70H388M172 110H348"/></g>
+      <g fill="#171c24" stroke="#4a5563">
+        <rect x="40" y="18" width="52" height="24" rx="5"/><rect x="80" y="58" width="52" height="24" rx="5"/><rect x="120" y="98" width="52" height="24" rx="5"/>
+        <rect x="234" y="136" width="52" height="24" rx="5"/>
+        <rect x="348" y="98" width="52" height="24" rx="5"/><rect x="388" y="58" width="52" height="24" rx="5"/><rect x="428" y="18" width="52" height="24" rx="5"/>
+      </g>
+      <g fill="none" stroke="#6fa86f" stroke-width="2"><path d="M66 42 L106 58 M106 82 L146 98 M146 122 L238 140"/><path d="M282 140 L374 122 M374 98 L414 82 M414 58 L454 42"/></g>
+      <g font-family="IBM Plex Mono,monospace" font-size="11" fill="#8a96a3">
+        <text x="14" y="76">zoom out:</text><text x="14" y="90">what is it?</text>
+        <text x="452" y="76">zoom in:</text><text x="452" y="90">where is it?</text>
+      </g>
+    </svg>
+    <div class="models">
+      <div class="model"><h4>U-Net</h4><p>Cell material vs. extracellular matrix.</p></div>
+      <div class="model"><h4>U-Net++</h4><p>Nuclei. A more detailed variant, because nuclei are smaller and harder to catch. Nuclei were carved out of the cell class so the cell/matrix split stays fixed.</p></div>
+    </div>
+    <p class="sec-note" style="margin-top:18px">All reported results come from a uniform 40 × 40 µm square taken from the exact middle of each ROI.</p>
+  </section>
+
+  <!-- ================= CONCLUSIONS ================= -->
+  <section id="conclusions">
+    <div class="sec-head"><span class="k">05</span><h2>Conclusions</h2><span class="rule"></span></div>
+    <ul class="list">
+      <li><b>Blood flow appears to shape valve remodeling.</b>The change is specific to one valve, not spread across the heart.</li>
+      <li><b>The obstructed pulmonary valve changed most.</b>Fewer cells and more extracellular matrix in ToF; the aortic valve stayed essentially the same.</li>
+      <li><b>Nuclei may differ.</b>Control nuclei look fewer and larger, ToF nuclei more numerous and smaller. Nuclei volume fraction alone doesn't settle it, so counting is next.</li>
+    </ul>
+  </section>
+
+  <!-- ================= FUTURE ================= -->
+  <section id="next">
+    <div class="sec-head"><span class="k">06</span><h2>What's next</h2><span class="rule"></span></div>
+    <ul class="list">
+      <li><b>Preprocessing <span class="st">in progress</span></b>Everything here ran on raw EM with no cleanup. A step that evens out brightness and noise, similar to the preprocessing used for watershed segmentation, should make segmentation more accurate and test whether these findings hold.</li>
+      <li><b>Cell counting <span class="st">in progress</span></b>Moving from how much volume nuclei fill to how many individual nuclei appear in each valve. A model derived from the nuclei segmentation now colors and labels each nucleus separately (see the single-nucleus reconstructions above).</li>
+      <li><b>Nucleoplasmic reticulum</b>Folds of the nuclear envelope that reach into the nucleus. How much folding there is tracks with cell state: extensive networks appear in aging cells, stressed cells and some cancers. In heart cells these folds sit near the calcium-signaling machinery that helps tell cells how to grow and function. If the amount differs between valves and hearts, that is a measurable fingerprint of altered cell organization in disease.</li>
+      <li><b>Whole image slices</b>Only the interior of each ROI has been analyzed so far. Extending to whole slices would characterize the full valve, not one central crop.</li>
+      <li><b>More samples</b>Each comparison here is one ROI per condition. More hearts are needed before any difference can be tested statistically.</li>
+    </ul>
+  </section>
 
   <footer>
     <p class="ack">
       <span class="h">Acknowledgements</span>
-      M.J. Murdock Charitable Trust · OHSU Center for Developmental Health · OHSU School of Medicine · OHSU Office of Research &amp; Innovation · University of Portland &amp; Susan Murray Ph.D. · Rugonyi Lab
+      This program is sponsored by the M.J. Murdock Charitable Trust · OHSU Center for Developmental Health · OHSU School of Medicine · OHSU Office of Research &amp; Innovation · University of Portland &amp; Susan Murray Ph.D.<br>
+      Rugonyi Lab: Sandra Rugonyi Ph.D., Makena Phillips, Sanjay Srikanth, Marina Nimmo, Onur Mutlu
     </p>
-    <a class="backlink" id="backlink" href="#" style="display:none">← Back to the poster</a>
+    <p class="ack" style="margin-bottom:8px"><span class="h">Contact</span></p>
+    <div class="contact">
+      <a href="mailto:wunderlich@ohsu.edu">wunderlich@ohsu.edu</a>
+      <a href="mailto:wunderli27@up.edu">wunderli27@up.edu</a>
+      <a href="https://www.linkedin.com/in/theresawunderlich" target="_blank" rel="noopener">linkedin.com/in/theresawunderlich</a>
+    </div>
   </footer>
 </div>
 
+<dialog id="lb" aria-label="Enlarged image">
+  <button type="button" id="lb-close">Close ✕</button>
+  <img id="lb-img" alt="">
+  <p id="lb-cap"></p>
+</dialog>
+
 <script>
 (function(){
-  var SW = { cellular:'var(--cellular)', matrix:'var(--extracellular)', nuclei:'var(--nuclei)' };
+  var COL = { cellular:['var(--cellular)','Cell material'], matrix:['var(--extracellular)','Extracellular matrix'],
+              nuclei:['var(--nuclei)','Nuclei'], tissue:['var(--tissue)','Raw tissue'] };
+  function legend(keys){ return keys.map(function(k){ return '<span><i style="background:'+COL[k][0]+'"></i>'+COL[k][1]+'</span>'; }).join(''); }
+  function $(id){ return document.getElementById(id); }
 
-  function swatches(colors){
-    return colors.toLowerCase().split('·').map(function(tok){
-      if(tok.indexOf('grayscale')>-1) return '#b9c0c8';
-      if(tok.indexOf('green')>-1) return SW.cellular;
-      if(tok.indexOf('purple')>-1||tok.indexOf('magenta')>-1) return SW.matrix;
-      if(tok.indexOf('red')>-1||tok.indexOf('brown')>-1) return SW.nuclei;
-      return null;
-    }).filter(Boolean).map(function(c){return '<i style="background:'+c+'"></i>';}).join('');
+  // lightbox
+  var lb=$('lb'), lbImg=$('lb-img'), lbCap=$('lb-cap');
+  function zoom(src,cap){
+    lbImg.src=src; lbImg.alt=cap||''; lbCap.textContent=cap||'';
+    if(lb.showModal) lb.showModal(); else window.open(src,'_blank');
   }
+  $('lb-close').onclick=function(){ lb.close(); };
+  lb.addEventListener('click',function(e){ if(e.target===lb) lb.close(); });
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-zoom]'); if(b) zoom(b.getAttribute('data-zoom'), b.getAttribute('data-cap'));
+  });
 
-  function media(item){
-    if(item.kind==='image'){
-      return '<img src="'+item.src+'" alt="'+item.title+'" loading="lazy">';
-    }
-    if(item.src){
-      var p = item.poster ? ' poster="'+item.poster+'"' : '';
-      return '<video controls preload="none" playsinline'+p+'><source src="'+item.src+'" type="video/mp4">Your browser can’t play this video.</video>';
-    }
-    return '<div class="placeholder"><div class="big">▶</div>Missing file<br><code>'+(item.src||'')+'</code></div>';
+  // comparison viewer
+  var tabs=$('tabs');
+  function pane(src,cond,title){
+    var cls=cond==='ToF'?'tof':'control';
+    return '<button type="button" class="pane" data-zoom="'+src+'" data-cap="'+cond+': '+title+'">'+
+           '<img src="'+src+'" alt="'+cond+' '+title+'" loading="lazy"><span class="tag '+cls+'">'+cond+'</span></button>';
   }
-
-  function card(item){
-    var isTof = /tof/i.test(item.condition);
-    var el = document.createElement('article');
-    el.className='card';
-    el.innerHTML =
-      '<div class="frame">'+
-        '<div class="tags"><span class="tag">'+item.valve+'</span>'+
-        '<span class="tag'+(isTof?' tof':'')+'">'+item.condition+'</span></div>'+
-        media(item)+
-      '</div>'+
-      '<div class="card-body">'+
-        '<p class="figno">Fig. '+item.fig+'</p>'+
-        '<h3>'+item.title+'</h3>'+
-        '<p class="cap">'+item.caption+'</p>'+
-        (item.description?'<p class="desc">'+item.description+'</p>':'')+
-        '<div class="colorline"><span class="swatch">'+swatches(item.colors)+'</span>'+item.colors+'</div>'+
-      '</div>';
-    return el;
+  function show(i){
+    var p=PAIRS[i];
+    $('pair').innerHTML=pane(p.tof,'ToF',p.title)+pane(p.control,'Control',p.title);
+    $('pair-title').textContent=p.title; $('pair-cap').textContent=p.caption; $('pair-legend').innerHTML=legend(p.colors);
+    Array.prototype.forEach.call(tabs.children,function(b,j){ b.setAttribute('aria-selected', j===i?'true':'false'); });
   }
+  PAIRS.forEach(function(p,i){
+    var b=document.createElement('button'); b.type='button'; b.role='tab'; b.textContent=p.tab;
+    b.onclick=function(){ show(i); }; tabs.appendChild(b);
+  });
+  show(0);
 
-  var gv=document.getElementById('grid-video'), gi=document.getElementById('grid-image');
-  FIGURES.forEach(function(item){ (item.kind==='image'?gi:gv).appendChild(card(item)); });
+  // movies
+  var mv=$('movies');
+  MOVIES.forEach(function(m){
+    var cls=m.condition==='ToF'?'tof':'control';
+    var el=document.createElement('article'); el.className='card';
+    el.innerHTML='<div class="frame"><span class="tag '+cls+'" style="z-index:2">'+m.condition+' · pulmonary</span>'+
+      '<video controls preload="none" playsinline muted loop poster="'+m.poster+'"><source src="'+m.src+'" type="video/mp4"></video></div>'+
+      '<div class="body"><h4>'+m.title+'</h4><div class="legend">'+legend(m.colors)+'</div></div>';
+    mv.appendChild(el);
+  });
 
-  if(POSTER_LINK){ var b=document.getElementById('backlink'); b.href=POSTER_LINK; b.style.display='inline-block'; }
+  // single nuclei
+  var ns=$('nuclei');
+  NUCLEI.forEach(function(n){
+    var b=document.createElement('button'); b.type='button'; b.setAttribute('data-zoom',n.src); b.setAttribute('data-cap',n.alt);
+    b.innerHTML='<img src="'+n.src+'" alt="'+n.alt+'" loading="lazy">'; ns.appendChild(b);
+  });
 
-  var cards=document.querySelectorAll('.card');
-  function revealAll(){cards.forEach(function(c){c.classList.add('in');});}
-  if('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:.05});
-    cards.forEach(function(c){io.observe(c);});
-    window.addEventListener('load',function(){setTimeout(revealAll,2000);}); // safety: nothing stays hidden
-  }else{ revealAll(); }
+  // charts
+  var MAX=0.7;
+  function bar(v,color,extra){
+    var w=(v/MAX*100).toFixed(1)+'%';
+    var out=v<0.15?' out':'';
+    return '<div class="track"><div class="bar'+out+'" data-w="'+w+'" style="width:0;--w:'+w+';background:'+color+'"><b>'+v.toFixed(3)+'</b></div>'+(extra||'')+'</div>';
+  }
+  var ref='<span class="ref" style="left:'+(0.5/MAX*100).toFixed(1)+'%"></span>';
+  var bc=$('bars-cell'), last='';
+  CELLULAR.forEach(function(d){
+    if(d.group!==last){ bc.insertAdjacentHTML('beforeend','<div class="grp">'+d.group+'</div>'); last=d.group; }
+    var hl=(d.group==='Pulmonary valve'&&d.label==='ToF')?' hl':'';
+    bc.insertAdjacentHTML('beforeend','<div class="row'+hl+'"><div class="rl">'+d.label+'</div>'+bar(d.v,d.label==='ToF'?'var(--tof)':'var(--control)',ref)+'</div>');
+  });
+  var cc=$('bars-comp');
+  COMPARTMENTS.forEach(function(d){
+    cc.insertAdjacentHTML('beforeend','<div class="row"><div class="rl">'+d.label+'</div><div class="pairbars">'+
+      bar(d.control,'var(--control)')+bar(d.tof,'var(--tof)')+'</div></div>');
+  });
+  function grow(root){ root.querySelectorAll('.bar').forEach(function(b){ b.style.width=b.getAttribute('data-w'); }); }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ grow(e.target); io.unobserve(e.target); } }); },{threshold:.2});
+    document.querySelectorAll('.chart').forEach(function(c){ io.observe(c); });
+    window.addEventListener('load',function(){ setTimeout(function(){ document.querySelectorAll('.chart').forEach(grow); },2500); });
+  } else document.querySelectorAll('.chart').forEach(grow);
+
+  // ground-truth spacing ticks
+  var gl=$('gtline'), pos=[2,9,16,23,33,45,59,76,96];
+  pos.forEach(function(p){ gl.insertAdjacentHTML('beforeend','<span class="tick" style="left:calc('+p+'% - 2px)"></span>'); });
+
+  // nav highlight
+  var links=document.querySelectorAll('nav a');
+  if('IntersectionObserver' in window){
+    var so=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){
+      links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id); }); } }); },{rootMargin:'-45% 0px -50% 0px'});
+    document.querySelectorAll('section').forEach(function(s){ so.observe(s); });
+  }
 })();
 </script>
 </body>

@@ -1,52 +1,59 @@
 # Valve Reconstructions
 
-**3D electron-microscopy reconstructions of cardiac valve tissue in a Tetralogy of Fallot model.**
+**3D electron-microscopy reconstructions of developing heart valve tissue in a Tetralogy of Fallot chick model, segmented with deep learning.**
 
 🔗 **Live site:** https://theresawunderlich.github.io/ValveReconstructions/
 
-This is the companion page for a research poster (M.J. Murdock Charitable Trust · University of Portland × OHSU). Scan the poster's QR code or follow the link above to watch the reconstructions behind the results.
+Companion page for the research talk and poster *Quantifying Cellular Organizations in Congenital Heart Disease Models Using Electron Microscopy and Deep Learning* (M.J. Murdock Charitable Trust · University of Portland × OHSU).
 
 ---
 
 ## The finding
 
-Altered blood flow in Tetralogy of Fallot (ToF) **reduced the cellular fraction of the pulmonary valve** while leaving the aortic valve unchanged, a valve-specific pattern consistent with a flow-driven effect.
+Altered blood flow in Tetralogy of Fallot (ToF) **reduced the cell fraction of the pulmonary valve** and increased its extracellular matrix, while the aortic valve stayed essentially unchanged: a valve-specific pattern consistent with blood flow shaping valve remodeling.
 
-| | Cellular fraction |
-|---|---|
-| Pulmonary valve — control | 0.51 |
-| Pulmonary valve — ToF | 0.35 (~15 pp lower) |
-| Aortic valve — difference | ≈ 0 |
+| Structure | Control | ToF |
+|---|---|---|
+| Pulmonary valve, cell fraction | 0.505 | 0.352 |
+| Pulmonary valve, extracellular matrix | 0.495 | 0.648 |
+| Pulmonary valve, nuclei | 0.080 | 0.089 |
+| Aortic valve, cell fraction | 0.501 | 0.503 |
+| Aorta wall, cell fraction | 0.467 | — |
+
+40 × 40 µm interior crops, n = 1 ROI per structure per condition, raw EM (no intensity normalization).
 
 ## What's on the page
 
-- **Reconstructions** — four rotating 3D volumes of the pulmonary valve leaflet (control vs. ToF), shown with the cellular material and nuclei highlighted, and again with just the cellular network.
-- **Segmentation stills** — how the volumes are labelled: a single ground-truth slice, the 3-class volume, the nuclei in isolation, orthogonal slice views, and the aortic leaflet for comparison.
+1. **Reconstructions**: tabbed ToF-vs-control viewer (pulmonary and aortic cell/matrix, 3-class with nuclei, cells + nuclei, orthogonal slices), four rotating 3D movies, and single-nucleus reconstructions from the cell-counting model.
+2. **Results**: cellular density by structure; pulmonary valve compartments.
+3. **Background**: CHD, the four features of ToF, hypothesis and aim.
+4. **Methods**: sample collection, EM regions of interest, U-Net / U-Net++ segmentation in Dragonfly ORS.
+5. **Conclusions** and **What's next**: preprocessing, cell counting, nucleoplasmic reticulum, whole image slices, more samples.
 
 ### Color key
 
 | Color | Class |
 |---|---|
-| 🟢 Green | Cellular material |
+| 🟢 Green | Cell material |
 | 🟣 Purple / magenta | Extracellular matrix |
 | 🔴 Red / brown | Nuclei |
-| ⬜ Grayscale | Raw tissue (in the movie renders) |
+| ⬜ Grayscale | Raw tissue |
 
-## How it was made
+## Editing
 
-ToF was induced in chick embryos with cyclopamine and confirmed in vivo by ultrasound of aortic blood flow. One control and one ToF heart were prepared for **volume electron microscopy**, sampling the pulmonary and aortic valves. Tissue was split into cellular and extracellular classes with a two-class U-Net trained on hand-traced ground-truth slices; nuclei were segmented separately and carved out of the cellular class so the verified split stays fixed. Volume fractions are voxel-count ratios, independent of the voxel-size calibration.
+All captions, figures and chart numbers live in one `<script>` block at the top of `index.html` (`PAIRS`, `MOVIES`, `NUCLEI`, `CELLULAR`, `COMPARTMENTS`).
 
 ## Repository layout
 
 ```
-index.html     the page itself (single file, no build step)
-videos/        four rotating 3D reconstructions (MP4)
+index.html     the page (single file, no build step)
+videos/        rotating 3D reconstructions (MP4)
 posters/       still frames used as video thumbnails
-images/        segmentation stills (PNG)
-README.md      this file
+images/        reconstruction stills, EM overviews, single-nucleus renders
+Readme.MD      this file
 ```
 
-The site is a single static page served with **GitHub Pages** any commit to the default branch republishes it automatically.
+Served with **GitHub Pages**; any commit to the default branch republishes it.
 
 ## Authors
 
@@ -55,4 +62,4 @@ Theresa Wunderlich¹, Sandra Rugonyi Ph.D.², Makena Phillips², Sanjay Srikanth
 
 ## Acknowledgements
 
-M.J. Murdock Charitable Trust · OHSU Center for Developmental Health · OHSU School of Medicine · OHSU Office of Research & Innovation · University of Portland & Susan Murray Ph.D. · Rugonyi Lab
+M.J. Murdock Charitable Trust · OHSU Center for Developmental Health · OHSU School of Medicine · OHSU Office of Research & Innovation · University of Portland & Susan Murray Ph.D. · Rugonyi Lab: Sandra Rugonyi Ph.D., Makena Phillips, Sanjay Srikanth, Marina Nimmo, Onur Mutlu
